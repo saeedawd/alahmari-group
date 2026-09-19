@@ -1,0 +1,33 @@
+Options -MultiViews
+DirectorySlash Off
+RewriteEngine On
+
+# 301: /ar and /en without trailing slash -> canonical slash (helps relative URL edge cases)
+RewriteRule ^ar$ /ar/ [R=301,L]
+RewriteRule ^en$ /en/ [R=301,L]
+
+# 301: .../index.html -> .../
+RewriteCond %{THE_REQUEST} ^[A-Z]+\s/+(.+)/index\.html(\?[^\s]*)?\s [NC]
+RewriteRule ^ /%1/ [R=301,L,NE]
+
+# 301: site-root index.html (only when this .htaccess is at document root)
+RewriteCond %{THE_REQUEST} ^[A-Z]+\s/+index\.html(\?[^\s]*)?\s [NC]
+RewriteRule ^ / [R=301,L,NE]
+
+# 301: any other .html -> extensionless
+RewriteCond %{THE_REQUEST} ^[A-Z]+\s/+(.+)\.html(\?[^\s]*)?\s [NC]
+RewriteRule ^ /%1 [QSA,R=301,L,NE]
+
+# Internal rewrite: if a directory exists AND a sibling .html file exists,
+# serve the .html (prevents Apache from redirecting to a trailing slash).
+# Do NOT apply when the URL ends with / — otherwise /en/companies/ breaks (rewrites to invalid path).
+RewriteCond %{REQUEST_URI} !/$
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# Internal rewrite: serve existing *.html for extensionless URL
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
